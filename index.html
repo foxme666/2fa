@@ -204,7 +204,10 @@
         }
 
         function generateTOTP() {
-            const secretInput = document.getElementById('secret').value;
+            let secretInput = document.getElementById('secret').value;
+            // 对输入的密钥进行 trim 处理
+            secretInput = secretInput.trim().replace(/\s+/g, '');
+            
             if (secretInput) {
                 currentSecret = secretInput;
                 updateTOTP(secretInput, true);
@@ -219,6 +222,8 @@
         function updateTOTP(secret, isNewGeneration = false) {
             if (secret) {
                 try {
+                    // 再次进行 trim 处理，以防万一
+                    secret = secret.trim().replace(/\s+/g, '');
                     const totp = TOTP.getOTP(secret);
                     const totpElement = document.getElementById('totp');
                     
