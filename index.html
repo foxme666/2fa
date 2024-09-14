@@ -126,6 +126,44 @@
         .fade-in {
             animation: fadeIn 0.5s ease-in;
         }
+
+        #toast-container {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            width: 90%;
+            max-width: 400px; /* 与主容器宽度一致 */
+            display: flex;
+            justify-content: center;
+            pointer-events: none;
+        }
+
+        #toast {
+            background-color: rgba(44, 62, 80, 0.9);
+            color: #fff;
+            text-align: center;
+            border-radius: 20px;
+            padding: 12px 20px;
+            font-size: 16px;
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            opacity: 0;
+            transform: translateY(-20px) scale(0.8);
+            transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        #toast.show {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+
+        #toast.hide {
+            opacity: 0;
+            transform: translateY(-20px) scale(0.8);
+        }
     </style>
 </head>
 <body>
@@ -140,9 +178,30 @@
         <div id="timer"></div>
     </div>
 
+    <div id="toast-container">
+        <div id="toast"></div>
+    </div>
+
     <script>
         let timerInterval;
         let currentSecret;
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.remove('hide');
+            toast.classList.add('show');
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+                toast.classList.add('hide');
+            }, 2000);  // 显示时间减少到2秒
+
+            // 在动画完全结束后移除类
+            setTimeout(() => {
+                toast.classList.remove('hide');
+            }, 2500);  // 2秒显示 + 0.5秒淡出动画
+        }
 
         function generateTOTP() {
             const secretInput = document.getElementById('secret').value;
@@ -152,7 +211,7 @@
                 startTimer();
                 showElements();
             } else {
-                alert('请先输入2FA密钥');
+                showToast('请先输入2FA密钥');
                 clearDisplay();
             }
         }
@@ -180,7 +239,7 @@
                     }, { once: true });
                 } catch (error) {
                     console.error('生成 TOTP 时出错:', error);
-                    alert('生成验证码时出错，请检查密钥是否正确');
+                    showToast('生成验证码时出错，请检查密钥是否正确');
                 }
             }
         }
@@ -225,10 +284,10 @@
             const totpCode = this.innerText;
             if (totpCode) {
                 navigator.clipboard.writeText(totpCode).then(() => {
-                    alert('验证码已复制到剪贴板');
+                    showToast('验证码已复制到剪贴板');
                 }).catch(err => {
                     console.error('复制失败:', err);
-                    alert('复制失败，请手动复制');
+                    showToast('复制失败，请手动复制');
                 });
             }
         });
