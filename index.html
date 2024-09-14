@@ -161,6 +161,40 @@
         #close-button:hover {
             background: rgba(0, 0, 0, 0.7);
         }
+
+        #loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        #loading-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #007AFF;
+            border-top: 5px solid transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
@@ -187,6 +221,9 @@
 
     <div id="expanded-content">
         <button id="close-button" onclick="closeTool()">&times;</button>
+        <div id="loading-overlay">
+            <div class="spinner"></div>
+        </div>
         <iframe id="expanded-frame"></iframe>
     </div>
 
@@ -206,8 +243,17 @@
         function expandTool(url) {
             const expandedContent = document.getElementById('expanded-content');
             const expandedFrame = document.getElementById('expanded-frame');
-            expandedFrame.src = url;
+            const loadingOverlay = document.getElementById('loading-overlay');
+
             expandedContent.style.display = 'block';
+            loadingOverlay.classList.add('show');
+
+            expandedFrame.onload = function() {
+                loadingOverlay.classList.remove('show');
+            };
+
+            expandedFrame.src = url;
+
             requestAnimationFrame(() => {
                 expandedContent.classList.add('active');
             });
@@ -215,10 +261,12 @@
 
         function closeTool() {
             const expandedContent = document.getElementById('expanded-content');
+            const loadingOverlay = document.getElementById('loading-overlay');
             expandedContent.classList.remove('active');
             setTimeout(() => {
                 expandedContent.style.display = 'none';
                 document.getElementById('expanded-frame').src = '';
+                loadingOverlay.classList.remove('show');
             }, 500);
         }
     </script>
