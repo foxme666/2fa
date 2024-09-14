@@ -169,7 +169,11 @@
 <body>
     <div class="container">
         <h1>2FA工具</h1>
-        <input type="text" id="secret" placeholder="输入2FA密钥">
+        <input type="text" id="secret" placeholder="输入2FA密钥" 
+               autocomplete="off" 
+               autocorrect="off" 
+               autocapitalize="off" 
+               spellcheck="false">
         <button id="generateButton">生成验证码</button>
         <div id="totp-container">
             <div id="totp"></div>
@@ -299,6 +303,11 @@
 
         // 初始化时隐藏元素
         hideElements();
+
+        // 在页面加载时清除输入框的值
+        window.addEventListener('load', function() {
+            document.getElementById('secret').value = '';
+        });
     </script>
     <footer style="position: fixed; bottom: 0; left: 0; right: 0; text-align: center; padding: 10px;">
         <span style="color: rgba(255, 255, 255, 0.9); font-size: 14px; text-shadow: 0 0 3px rgba(0, 0, 0, 0.3);">
