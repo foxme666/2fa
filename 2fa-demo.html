@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2FA 验证码生成器</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jssha/3.2.0/sha.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <script src="totp-generation.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Icons', 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+            background: transparent;
+            color: #333333;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 400px;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 28px;
+            font-weight: 600;
+        }
+
+        input, button {
+            width: 100%;
+            padding: 15px;
+            margin: 10px 0;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            background: rgba(255, 255, 255, 0.5);
+            color: #333333;
+            box-sizing: border-box;
+        }
+
+        input::placeholder {
+            color: rgba(0, 0, 0, 0.4);
+        }
+
+        input:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1);
+        }
+
+        button {
+            background: #007AFF;
+            color: #ffffff;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        button:hover {
+            background: #0056b3;
+        }
+
+        #totp-container {
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            text-align: center;
+            cursor: pointer;
+        }
+
+        #totp {
+            font-size: 42px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            letter-spacing: 2px;
+        }
+
+        #totp-hint, #timer {
+            font-size: 14px;
+            color: rgba(0, 0, 0, 0.6);
+        }
+
+        #timer {
+            text-align: center;
+            margin-top: 10px;
+            font-weight: 500;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes dissolve {
+            0% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0; transform: scale(1.2); }
+            100% { opacity: 0; transform: scale(0.8); }
+        }
+
+        .dissolve {
+            animation: dissolve 0.5s ease-out;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        #toast-container {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+        }
+
+        #toast {
+            background-color: rgba(0, 0, 0, 0.8);
+            color: #ffffff;
+            text-align: center;
+            border-radius: 20px;
+            padding: 12px 20px;
+            font-size: 16px;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            opacity: 0;
+            transform: translateY(-20px) scale(0.8);
+            transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        #toast.show {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+
+        #toast.hide {
+            opacity: 0;
+            transform: translateY(-20px) scale(0.8);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>2FA工具</h1>
+        <input type="text" id="secret" placeholder="输入2FA密钥" 
+               autocomplete="off" 
+               autocorrect="off" 
+               autocapitalize="off" 
+               spellcheck="false">
+        <button id="generateButton">生成验证码</button>
+        <div id="totp-container">
+            <div id="totp"></div>
+            <div id="totp-hint">点击复制</div>
+        </div>
+        <div id="timer"></div>
+    </div>
+
+    <div id="toast-container">
+        <div id="toast"></div>
+    </div>
+
+    <script>
+        let timerInterval;
+        let currentSecret;
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.remove('hide');
+            toast.classList.add('show');
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+                toast.classList.add('hide');
+            }, 2000);  // 显示时间保持2秒
+
+            // 在动画完全结束后移除类
+            setTimeout(() => {
+                toast.classList.remove('hide');
+            }, 2500);  // 2秒显示 + 0.5秒淡出动画
+        }
+
+        function generateTOTP() {
+            let secretInput = document.getElementById('secret').value;
+            // 对输入的密钥进行 trim 处理
+            secretInput = secretInput.trim().replace(/\s+/g, '');
+            
+            if (secretInput) {
+                currentSecret = secretInput;
+                updateTOTP(secretInput, true);
+                startTimer();
+                showElements();
+            } else {
+                showToast('请先输入2FA密钥');
+                clearDisplay();
+            }
+        }
+
+        function updateTOTP(secret, isNewGeneration = false) {
+            if (secret) {
+                try {
+                    // 再次进行 trim 处理，以防万一
+                    secret = secret.trim().replace(/\s+/g, '');
+                    const totp = TOTP.getOTP(secret);
+                    const totpElement = document.getElementById('totp');
+                    
+                    if (isNewGeneration) {
+                        totpElement.classList.add('fade-in');
+                        totpElement.innerText = totp;
+                    } else {
+                        totpElement.classList.add('dissolve');
+                        setTimeout(() => {
+                            totpElement.classList.remove('dissolve');
+                            totpElement.classList.add('fade-in');
+                            totpElement.innerText = totp;
+                        }, 250);
+                    }
+
+                    totpElement.addEventListener('animationend', () => {
+                        totpElement.classList.remove('fade-in');
+                    }, { once: true });
+                } catch (error) {
+                    console.error('生成 TOTP 时出错:', error);
+                    showToast('生成验证码时出错，请检查密钥是否正确');
+                }
+            }
+        }
+
+        function startTimer() {
+            clearInterval(timerInterval);
+            
+            function tick() {
+                const now = new Date();
+                const seconds = 30 - (now.getSeconds() % 30);
+                document.getElementById('timer').innerText = `剩余有效时间: ${seconds} 秒`;
+                
+                if (seconds === 30) {
+                    updateTOTP(currentSecret);
+                }
+            }
+
+            tick();
+            timerInterval = setInterval(tick, 1000);
+        }
+
+        function clearDisplay() {
+            document.getElementById('totp').innerText = '';
+            document.getElementById('timer').innerText = '';
+            clearInterval(timerInterval);
+            hideElements();
+        }
+
+        function showElements() {
+            document.getElementById('totp').classList.add('show');
+            document.getElementById('timer').classList.add('show');
+        }
+
+        function hideElements() {
+            document.getElementById('totp').classList.remove('show');
+            document.getElementById('timer').classList.remove('show');
+        }
+
+        document.getElementById('generateButton').addEventListener('click', generateTOTP);
+
+        document.getElementById('totp-container').addEventListener('click', function() {
+            const totpCode = document.getElementById('totp').innerText;
+            if (totpCode) {
+                navigator.clipboard.writeText(totpCode).then(() => {
+                    showToast('复制成功');
+                }).catch(err => {
+                    console.error('复制失败:', err);
+                    showToast('复制失败，请手动复制');
+                });
+            }
+        });
+
+        // 初始化时隐藏元素
+        hideElements();
+
+        // 在页面加载时清除输入框的值
+        window.addEventListener('load', function() {
+            document.getElementById('secret').value = '';
+        });
+    </script>
+</body>
+</html>
