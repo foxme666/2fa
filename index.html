@@ -14,23 +14,18 @@
             align-items: center;
             min-height: 100vh;
             margin: 0;
-            background: linear-gradient(-45deg, 
-                #4facfe 0%, 
-                #00f2fe 20%, 
-                #a6c1ee 40%, 
-                #f68084 60%, 
-                #fbc2eb 80%, 
-                #8fd3f4 100%);
-            background-size: 400% 400%;
-            animation: gradientBG 20s ease infinite;
+            background: linear-gradient(315deg, #FF3F3F 0%, #063CFF 100%);
             padding: 20px;
             box-sizing: border-box;
         }
 
         @keyframes gradientBG {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
+            0% {
+                background-position: 100% 100%;
+            }
+            100% {
+                background-position: 0% 0%;
+            }
         }
 
         .container {
@@ -42,8 +37,8 @@
         }
 
         .tool-box {
-            background: rgba(255, 255, 255, 0.7); /* 增加不透明度到 0.7 */
-            backdrop-filter: blur(15px); /* 增加模糊效果强度到 15px */
+            background: rgba(255, 255, 255, 0.25); /* 增加不透明度 */
+            backdrop-filter: blur(15px); /* 增加模糊效果 */
             -webkit-backdrop-filter: blur(15px);
             border-radius: 20px;
             padding: 20px;
@@ -60,23 +55,25 @@
         .tool-box:hover {
             transform: translateY(-5px);
             box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
-            background: rgba(255, 255, 255, 0.5); /* 悬停时的背景不透明度为 0.5 */
+            background: rgba(255, 255, 255, 0.35); /* 悬停时更不透明 */
         }
 
         .tool-box h2 {
-            color: #333333;
+            color: #ffffff; /* 保持白色文字 */
             margin: 0 0 10px 0;
             font-size: 18px;
             font-weight: 600;
             text-align: center;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1); /* 添加轻微文字阴影 */
         }
 
         .tool-box p {
-            color: #555555;
+            color: rgba(255, 255, 255, 0.9); /* 略微调整描述文字颜色 */
             text-align: center;
             margin: 0;
             font-size: 14px;
             font-weight: 400;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1); /* 添加轻微文字阴影 */
         }
 
         .tool-box-icon {
