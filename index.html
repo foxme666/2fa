@@ -37,8 +37,8 @@
         }
 
         .tool-box {
-            background: rgba(255, 255, 255, 0.25); /* 增加不透明度 */
-            backdrop-filter: blur(15px); /* 增加模糊效果 */
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(15px);
             -webkit-backdrop-filter: blur(15px);
             border-radius: 20px;
             padding: 20px;
@@ -50,12 +50,44 @@
             cursor: pointer;
             transition: all 0.3s ease;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            opacity: 0;
+            transform: translateY(-50px);
+            animation: fadeInDown 1.5s ease forwards;
+            position: relative;
+            overflow: visible;
+        }
+
+        @keyframes fadeInDown {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .tool-box:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
-            background: rgba(255, 255, 255, 0.35); /* 悬停时更不透明 */
+            transform: translateY(-10px) scale(1.05);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+            background: rgba(255, 255, 255, 0.35);
+        }
+
+        .tool-box::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border-radius: 20px;
+            opacity: 0;
+            transition: opacity 0.3s ease, box-shadow 0.3s ease;
+            pointer-events: none;
+        }
+
+        .tool-box:hover::after {
+            opacity: 1;
+            box-shadow: 
+                0 0 20px 5px rgba(255, 63, 63, 0.3),  /* 红色光晕 */
+                0 0 30px 10px rgba(6, 60, 255, 0.2);  /* 蓝色光晕 */
         }
 
         .tool-box h2 {
@@ -198,24 +230,24 @@
 </head>
 <body>
     <div class="container">
-        <div class="tool-box" onclick="expandTool('2fa-demo.html')">
+        <div class="tool-box" onclick="expandTool('2fa-demo.html')" style="animation-delay: 0.1s;">
             <div class="tool-box-icon">🔐</div>
             <h2>2FA工具</h2>
             <p>生成双因素认证验证码</p>
         </div>
 
-        <div class="tool-box" onclick="expandTool('qr-decoder.html')">
+        <div class="tool-box" onclick="expandTool('qr-decoder.html')" style="animation-delay: 0.2s;">
             <div class="tool-box-icon">📷</div>
             <h2>二维码解码器</h2>
             <p>解析二维码</p>
         </div>
 
-        <div class="tool-box" onclick="expandTool('2fa-demo.html')">
+        <div class="tool-box" onclick="expandTool('2fa-demo.html')" style="animation-delay: 0.3s;">
             <div class="tool-box-icon">🔐</div>
             <h2>2FA工具</h2>
             <p>生成双因素认证验证码</p>
         </div>
-        <!-- 可以在这里添加更多工具方块 -->
+        <!-- 可以这里添加更多工具方块 -->
     </div>
 
     <div id="expanded-content">
